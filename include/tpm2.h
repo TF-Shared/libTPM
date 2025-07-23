@@ -7,18 +7,11 @@
 #ifndef TPM2_H
 #define TPM2_H
 
+#include "tpm2_chip.h"
 #include <assert.h>
+#include <common/debug.h>
 #include <errno.h>
 #include <stdint.h>
-
-#include <tpm2_chip.h>
-
-// TODO: formalise logging interface
-#include <stdio.h>
-
-#define INFO printf
-#define WARN printf
-#define ERROR printf
 
 extern const struct spi_plat *tpm_spidev;
 

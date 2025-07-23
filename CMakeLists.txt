@@ -22,14 +22,31 @@ add_library(tpm2
     STATIC
         ${PROJECT_SOURCE_DIR}/src/tpm2_chip.c
         ${PROJECT_SOURCE_DIR}/src/tpm2_cmds.c
+)
+
+if (NOT DEFINED TPM_INTERFACE OR
+    TPM_INTERFACE STREQUAL "" OR
+    TPM_INTERFACE STREQUAL "NONE")
+    message(WARNING "TPM_INTERFACE not set — defaulting to FIFO_SPI")
+    set(TPM_INTERFACE "FIFO_SPI")
+endif()
+
+if (${TPM_INTERFACE} STREQUAL "FIFO_SPI")
+   target_sources (tpm2
+       PRIVATE
         ${PROJECT_SOURCE_DIR}/src/tpm2_fifo.c
         ${PROJECT_SOURCE_DIR}/src/tpm2_fifo_spi.c
-)
+   )
+   target_compile_definitions(tpm2 PRIVATE TPM_INTERFACE_FIFO_SPI)
+else()
+   message(FATAL_ERROR "Unknown transport interface selected")
+endif()
 
 target_include_directories(tpm2
     PUBLIC
         $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>
         $<INSTALL_INTERFACE:include>
+	$<INSTALL_INTERFACE:include/tpm2>  # extra path for unqualified includes
 )
 
 if(PROJECT_API)
@@ -53,6 +70,11 @@ install(FILES
     ${PROJECT_SOURCE_DIR}/include/tpm2_chip.h
     ${PROJECT_SOURCE_DIR}/include/transport/spi.h
     DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/tpm2
+)
+
+install(FILES
+    ${PROJECT_SOURCE_DIR}/include/common/debug.h
+    DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/tpm2/common
 )
 
 # Export targets file
