@@ -1,0 +1,82 @@
+#
+# Copyright (c) 2025, Arm Limited and Contributors. All rights reserved.
+#
+# SPDX-License-Identifier: MIT OR GPL-2.0-or-later
+#
+
+cmake_minimum_required(VERSION 3.15)
+
+project(libtpm2 VERSION 0.1 LANGUAGES C)
+
+#
+# Set global flags.
+#
+set(CMAKE_C_STANDARD 11)
+set(CMAKE_C_STANDARD_REQUIRED TRUE)
+set(CMAKE_C_EXTENSIONS TRUE)
+
+SET(TARGET_GROUP release CACHE STRING "Specify the Build Target [\"release\" by default]")
+
+
+add_library(tpm2
+    STATIC
+        ${PROJECT_SOURCE_DIR}/src/tpm2_chip.c
+        ${PROJECT_SOURCE_DIR}/src/tpm2_cmds.c
+        ${PROJECT_SOURCE_DIR}/src/tpm2_fifo.c
+        ${PROJECT_SOURCE_DIR}/src/tpm2_fifo_spi.c
+)
+
+target_include_directories(tpm2
+    PUBLIC
+        $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>
+        $<INSTALL_INTERFACE:include>
+)
+
+if(PROJECT_API)
+    include(${PROJECT_SOURCE_DIR}/cmake/ProjectApi.cmake)
+endif()
+
+include(GNUInstallDirs)
+include(CMakePackageConfigHelpers)
+
+# Install the library
+install(TARGETS tpm2
+    EXPORT tpm2Targets
+    ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+    LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+    RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+    INCLUDES DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
+)
+
+install(FILES
+    ${PROJECT_SOURCE_DIR}/include/tpm2.h
+    ${PROJECT_SOURCE_DIR}/include/tpm2_chip.h
+    ${PROJECT_SOURCE_DIR}/include/transport/spi.h
+    DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/tpm2
+)
+
+# Export targets file
+install(EXPORT tpm2Targets
+    FILE tpm2Targets.cmake
+    NAMESPACE tpm2::
+    DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/tpm2
+)
+
+# Generate Config and Version files
+write_basic_package_version_file(
+    "${CMAKE_CURRENT_BINARY_DIR}/tpm2ConfigVersion.cmake"
+    VERSION ${PROJECT_VERSION}
+    COMPATIBILITY SameMajorVersion
+)
+
+configure_package_config_file(
+    ${PROJECT_SOURCE_DIR}/tpm2Config.cmake.in
+    ${CMAKE_CURRENT_BINARY_DIR}/tpm2Config.cmake
+    INSTALL_DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/tpm2
+)
+
+install(FILES
+    ${CMAKE_CURRENT_BINARY_DIR}/tpm2Config.cmake
+    ${CMAKE_CURRENT_BINARY_DIR}/tpm2ConfigVersion.cmake
+    DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/tpm2
+)
