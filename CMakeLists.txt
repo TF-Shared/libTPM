@@ -17,9 +17,32 @@ set(CMAKE_C_EXTENSIONS TRUE)
 set (TPM_INTERFACE "NONE" CACHE STRING "Transport interface for TPM (Currently supported: FIFO_SPI)")
 set_property (CACHE TPM_INTERFACE PROPERTY STRINGS "FIFO_SPI")
 
+set(
+    LOG_LEVEL "" CACHE STRING
+    "Log Level options:
+     0  - NONE
+     10 - ERROR
+     20 - NOTICE
+     30 - WARNING
+     40 - INFO
+     50 - VERBOSE"
+)
+
+if(LOG_LEVEL STREQUAL "")
+    if(CMAKE_BUILD_TYPE STREQUAL "Release")
+        set(LOG_LEVEL 10)
+    else()
+        set(LOG_LEVEL 40)
+    endif()
+endif()
+
+add_compile_definitions(LOG_LEVEL=${LOG_LEVEL})
+
+set(DEBUG_BACKEND_HEADER "log_backend_printf.h" CACHE STRING "Path to debug backend header")
+add_compile_definitions(DEBUG_BACKEND_HEADER="${DEBUG_BACKEND_HEADER}")
+
 
 SET(TARGET_GROUP release CACHE STRING "Specify the Build Target [\"release\" by default]")
-
 
 add_library(tpm2
     STATIC
@@ -52,6 +75,7 @@ target_include_directories(tpm2
 	$<INSTALL_INTERFACE:include/tpm2>  # extra path for unqualified includes
 )
 
+
 if(PROJECT_API)
     include(${PROJECT_SOURCE_DIR}/cmake/ProjectApi.cmake)
 endif()
@@ -73,11 +97,6 @@ install(FILES
     ${PROJECT_SOURCE_DIR}/include/tpm2_chip.h
     ${PROJECT_SOURCE_DIR}/include/transport/spi.h
     DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/tpm2
-)
-
-install(FILES
-    ${PROJECT_SOURCE_DIR}/include/common/debug.h
-    DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/tpm2/common
 )
 
 # Export targets file

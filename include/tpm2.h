@@ -8,8 +8,6 @@
 #define TPM2_H
 
 #include "tpm2_chip.h"
-#include <assert.h>
-#include <common/debug.h>
 #include <errno.h>
 #include <stdint.h>
 struct spi_plat;

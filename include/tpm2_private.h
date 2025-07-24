@@ -8,6 +8,7 @@
 #define TPM2_PRIVATE_H
 
 #include "tpm2_chip.h"
+#include "debug.h"
 
 /*
  * TPM FIFO register space address offsets

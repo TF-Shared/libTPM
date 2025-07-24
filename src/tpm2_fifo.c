@@ -10,9 +10,16 @@
 #include <tpm2_chip.h>
 #include <tpm2_private.h>
 
-#define LOCALITY_START_ADDRESS(x, y) ((uint16_t)(x->address + (0x1000 * y)))
+#define LOCALITY_START_ADDRESS(x, y) ((uint16_t)(0x1000 * y))
 
 TPM_STATIC_ASSERT(sizeof(uint16_t) == 2, unexpected_uint16_t_size);
+
+static void output_tpm_status(uint8_t status)
+{
+	INFO("STATUS=0x%02x CRDY=%d EXP=%d AVAIL=%d VALID=%d \n", status,
+	     !!(status & TPM_STAT_COMMAND_READY), !!(status & TPM_STAT_EXPECT),
+	     !!(status & TPM_STAT_AVAIL), !!(status & TPM_STAT_VALID));
+}
 
 static int tpm2_get_info(struct tpm_chip_data *chip_data, uint8_t locality)
 {
@@ -58,6 +65,8 @@ static int tpm2_wait_reg_bits(uint16_t reg, uint8_t set, unsigned long timeout,
 		i++;
 	} while (!tpm_timeout_ops.timeout_elapsed(timeout_delay));
 
+	ERROR("%s: reg=0x%04x set=0x%02x after %d iters\n", __func__, reg, set,
+	      i);
 	return TPM_ERR_TIMEOUT;
 }
 
@@ -76,7 +85,7 @@ static int tpm2_fifo_request_access(struct tpm_chip_data *chip_data,
 
 	err = tpm2_wait_reg_bits(tpm_base_addr + TPM_FIFO_REG_ACCESS,
 				 TPM_ACCESS_ACTIVE_LOCALITY,
-				 chip_data->timeout_msec_a, &status);
+				 chip_data->timeouts->msec_a, &status);
 	if (err == 0) {
 		chip_data->locality = locality;
 		return TPM_SUCCESS;
@@ -103,6 +112,8 @@ static int tpm2_fifo_release_locality(struct tpm_chip_data *chip_data,
 	}
 
 	ERROR("%s: Unable to release locality\n", __func__);
+	INFO("%s: ACCESS=0x%02x loc=%d base=0x%04x\n", __func__, buf,
+	     chip_data->locality, tpm_base_addr);
 	return TPM_ERR_RESPONSE;
 }
 
@@ -116,12 +127,15 @@ static int tpm2_fifo_prepare(struct tpm_chip_data *chip_data)
 	err = tpm2_fifo_write_byte(tpm_base_addr + TPM_FIFO_REG_STATUS,
 				   TPM_STAT_COMMAND_READY);
 	if (err < 0) {
+		ERROR("%s: write COMMAND_READY failed\n", __func__);
+		INFO("%s: err=%d loc=%d base=0x%04x\n", __func__, err,
+		     chip_data->locality, tpm_base_addr);
 		return err;
 	}
 
 	err = tpm2_wait_reg_bits(tpm_base_addr + TPM_FIFO_REG_STATUS,
 				 TPM_STAT_COMMAND_READY,
-				 chip_data->timeout_msec_b, &status);
+				 chip_data->timeouts->msec_b, &status);
 	if (err < 0) {
 		ERROR("%s: TPM Status Busy\n", __func__);
 		return err;
@@ -136,7 +150,7 @@ static int tpm2_fifo_get_burstcount(struct tpm_chip_data *chip_data,
 	uint16_t tpm_base_addr =
 		LOCALITY_START_ADDRESS(chip_data, chip_data->locality);
 	uint64_t timeout_delay = tpm_timeout_ops.timeout_init_us(
-		chip_data->timeout_msec_a * 1000);
+		chip_data->timeouts->msec_a * 1000);
 	int err;
 
 	if (burstcount == NULL) {
@@ -164,6 +178,10 @@ static int tpm2_fifo_get_burstcount(struct tpm_chip_data *chip_data,
 		}
 	} while (!tpm_timeout_ops.timeout_elapsed(timeout_delay));
 
+	ERROR("%s: timeout reading BURST_COUNT\n", __func__);
+	INFO("%s: loc=%d base=0x%04x\n", __func__, chip_data->locality,
+	     LOCALITY_START_ADDRESS(chip_data, chip_data->locality));
+
 	return TPM_ERR_TIMEOUT;
 }
 
@@ -178,17 +196,28 @@ static int tpm2_fifo_send(struct tpm_chip_data *chip_data, const tpm_cmd *buf)
 
 	if (sizeof(buf->header) != TPM_HEADER_SIZE) {
 		ERROR("%s: invalid command header size.\n", __func__);
+		INFO("%s: header_size=%zu expected=%u loc=%d base=0x%04x\n",
+		     __func__, sizeof(buf->header), TPM_HEADER_SIZE,
+		     chip_data->locality,
+		     LOCALITY_START_ADDRESS(chip_data, chip_data->locality));
 		return TPM_INVALID_PARAM;
 	}
 
 	err = tpm2_fifo_read_byte(tpm_base_addr + TPM_FIFO_REG_STATUS, &status);
 	if (err < 0) {
+		ERROR("%s: read STATUS failed\n", __func__);
+		INFO("%s: err=%d loc=%d base=0x%04x\n", __func__, err,
+		     chip_data->locality, tpm_base_addr);
 		return err;
 	}
 
 	if (!(status & TPM_STAT_COMMAND_READY)) {
 		err = tpm2_fifo_prepare(chip_data);
 		if (err < 0) {
+			ERROR("%s: prepare failed\n", __func__);
+			output_tpm_status(status);
+			INFO("%s: err=%d loc=%d base=0x%04x\n", __func__, err,
+			     chip_data->locality, tpm_base_addr);
 			return err;
 		}
 	}
@@ -201,15 +230,30 @@ static int tpm2_fifo_send(struct tpm_chip_data *chip_data, const tpm_cmd *buf)
 						   TPM_FIFO_REG_DATA_FIFO,
 					   header_data[index]);
 		if (err < 0) {
+			ERROR("%s: write header byte failed\n", __func__);
+			INFO("%s: idx=%u val=0x%02x err=%d loc=%d base=0x%04x\n",
+			     __func__, index, header_data[index], err,
+			     chip_data->locality, tpm_base_addr);
 			return err;
 		}
 	}
 
 	len = be32toh(buf->header.cmd_size);
 
+	if (len < TPM_HEADER_SIZE) {
+		ERROR("%s: invalid command size\n", __func__);
+		INFO("%s: cmd_size=%u header=%u loc=%d base=0x%04x\n", __func__,
+		     len, TPM_HEADER_SIZE, chip_data->locality, tpm_base_addr);
+		return TPM_INVALID_PARAM;
+	}
+
 	while (index < len) {
 		err = tpm2_fifo_get_burstcount(chip_data, &burstcnt);
 		if (err < 0) {
+			ERROR("%s: get_burstcount failed\n", __func__);
+			INFO("%s: err=%d index=%u len=%u loc=%d base=0x%04x\n",
+			     __func__, err, index, len, chip_data->locality,
+			     tpm_base_addr);
 			return err;
 		}
 
@@ -218,6 +262,13 @@ static int tpm2_fifo_send(struct tpm_chip_data *chip_data, const tpm_cmd *buf)
 				tpm_base_addr + TPM_FIFO_REG_DATA_FIFO,
 				buf->data[index - TPM_HEADER_SIZE]);
 			if (err < 0) {
+				ERROR("%s: write data byte failed\n", __func__);
+				INFO("%s: data_idx=%u val=0x%02x err=%d "
+				     "burst_left=%u loc=%d base=0x%04x\n",
+				     __func__, (index - TPM_HEADER_SIZE),
+				     buf->data[index - TPM_HEADER_SIZE], err,
+				     burstcnt, chip_data->locality,
+				     tpm_base_addr);
 				return err;
 			}
 			index++;
@@ -225,21 +276,32 @@ static int tpm2_fifo_send(struct tpm_chip_data *chip_data, const tpm_cmd *buf)
 	}
 
 	err = tpm2_wait_reg_bits(tpm_base_addr + TPM_FIFO_REG_STATUS,
-				 TPM_STAT_VALID, chip_data->timeout_msec_c,
+				 TPM_STAT_VALID, chip_data->timeouts->msec_c,
 				 &status);
 	if (err < 0) {
+		ERROR("%s: wait VALID failed\n", __func__);
+		output_tpm_status(status);
+		INFO("%s: err=%d loc=%d base=0x%04x\n", __func__, err,
+		     chip_data->locality, tpm_base_addr);
 		return err;
 	}
 
 	if (status & TPM_STAT_EXPECT) {
 		ERROR("%s: TPM is still expecting data after command buffer is sent\n",
 		      __func__);
+		output_tpm_status(status);
+		INFO("%s: loc=%d base=0x%04x index=%u len=%u\n", __func__,
+		     chip_data->locality, tpm_base_addr, index, len);
 		return TPM_ERR_TRANSFER;
 	}
 
 	err = tpm2_fifo_write_byte(tpm_base_addr + TPM_FIFO_REG_STATUS,
 				   TPM_STAT_GO);
 	if (err < 0) {
+		ERROR("%s: write GO failed\n", __func__);
+		output_tpm_status(status);
+		INFO("%s: err=%d loc=%d base=0x%04x\n", __func__, err,
+		     chip_data->locality, tpm_base_addr);
 		return err;
 	}
 
@@ -267,7 +329,7 @@ static int tpm2_fifo_read_data(struct tpm_chip_data *chip_data, tpm_cmd *buf,
 	}
 
 	err = tpm2_wait_reg_bits(tpm_base_addr + TPM_FIFO_REG_STATUS,
-				 TPM_STAT_AVAIL, chip_data->timeout_msec_c,
+				 TPM_STAT_AVAIL, chip_data->timeouts->msec_c,
 				 status);
 	if (err < 0) {
 		return err;
