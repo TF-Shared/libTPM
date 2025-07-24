@@ -47,9 +47,16 @@ int tpm_interface_init(const struct spi_plat *transport,
 	int err;
 	tpm_spidev = transport;
 	if (timeout_ops == NULL) {
+#ifdef HAS_LIB_TIMER
+		tpm_timeout_ops = tpm_lib_timeout_ops;
+#else
+		ERROR("%s: delay_ops required\n", __func__);
 		return TPM_INVALID_PARAM;
+#endif
 	}
-	tpm_timeout_ops = *timeout_ops;
+	else {
+		tpm_timeout_ops = *timeout_ops;
+	}
 	interface = tpm_interface_getops(chip_data, locality);
 
 	err = interface->request_access(chip_data, locality);

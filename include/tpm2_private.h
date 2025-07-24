@@ -116,4 +116,12 @@ int tpm2_fifo_read_byte(uint16_t tpm_reg, uint8_t *val);
 
 int tpm2_fifo_read_chunk(uint16_t tpm_reg, uint8_t len, void *val);
 
+/* HAS_LIB_TIMER is set if a standard library (e.g. POSIX) timer supplies
+ * the timeout functions, rather than being passed explicitly to the TPM
+ * library.
+ */
+#ifdef HAS_LIB_TIMER
+extern const struct tpm_timeout_ops tpm_lib_timeout_ops;
+#endif
+
 #endif /* TPM2_PRIVATE_H */

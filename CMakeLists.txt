@@ -41,6 +41,9 @@ add_compile_definitions(LOG_LEVEL=${LOG_LEVEL})
 set(DEBUG_BACKEND_HEADER "log_backend_printf.h" CACHE STRING "Path to debug backend header")
 add_compile_definitions(DEBUG_BACKEND_HEADER="${DEBUG_BACKEND_HEADER}")
 
+set (LIB_TIMER "NONE" CACHE STRING "Option to use library timer, rather than explicitly pass one")
+set_property (CACHE LIB_TIMER PROPERTY STRINGS "NONE" "POSIX")
+
 
 SET(TARGET_GROUP release CACHE STRING "Specify the Build Target [\"release\" by default]")
 
@@ -67,6 +70,15 @@ if (${TPM_INTERFACE} STREQUAL "FIFO_SPI")
 else()
    message(FATAL_ERROR "Unknown transport interface selected")
 endif()
+
+if (${LIB_TIMER} STREQUAL "POSIX")
+   target_sources (tpm2
+       PRIVATE
+          ${PROJECT_SOURCE_DIR}/src/timer/posix_timer_ops.c
+   )
+   add_compile_definitions (HAS_LIB_TIMER=1)
+endif()
+
 
 target_include_directories(tpm2
     PUBLIC
