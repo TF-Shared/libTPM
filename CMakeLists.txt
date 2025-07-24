@@ -14,6 +14,9 @@ project(libtpm2 VERSION 0.1 LANGUAGES C)
 set(CMAKE_C_STANDARD 11)
 set(CMAKE_C_STANDARD_REQUIRED TRUE)
 set(CMAKE_C_EXTENSIONS TRUE)
+set (TPM_INTERFACE "NONE" CACHE STRING "Transport interface for TPM (Currently supported: FIFO_SPI)")
+set_property (CACHE TPM_INTERFACE PROPERTY STRINGS "FIFO_SPI")
+
 
 SET(TARGET_GROUP release CACHE STRING "Specify the Build Target [\"release\" by default]")
 

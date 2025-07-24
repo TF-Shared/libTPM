@@ -11,7 +11,7 @@
 
 #include <tpm2.h>
 #include <tpm2_chip.h>
-#include <tpm2_interface.h>
+#include <tpm2_private.h>
 #include <transport/spi.h>
 
 #define ENCODE_LIMIT 128
@@ -25,7 +25,7 @@ const struct spi_plat *tpm_spidev;
 
 static int tpm2_spi_transfer(const void *data_out, void *data_in, uint8_t len)
 {
-	return tpm_spidev->ops->xfer(NULL, len, data_out, data_in);
+	return tpm_spidev->ops->xfer(tpm_spidev->priv, len, data_out, data_in);
 }
 
 /*
@@ -107,13 +107,13 @@ static int tpm2_spi_start_transaction(uint16_t tpm_reg, bool write, uint8_t len)
 
 static void tpm2_spi_end_transaction(void)
 {
-	tpm_spidev->ops->stop(NULL);
+	tpm_spidev->ops->stop(tpm_spidev->priv);
 }
 
 static void tpm2_spi_init(void)
 {
-	tpm_spidev->ops->get_access(NULL);
-	tpm_spidev->ops->start(NULL);
+	tpm_spidev->ops->get_access(tpm_spidev->priv);
+	tpm_spidev->ops->start(tpm_spidev->priv);
 }
 
 static int tpm2_fifo_io(uint16_t tpm_reg, bool is_write, uint8_t len, void *val)

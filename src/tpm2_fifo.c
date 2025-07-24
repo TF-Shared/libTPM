@@ -8,7 +8,7 @@
 
 #include <tpm2.h>
 #include <tpm2_chip.h>
-#include <tpm2_interface.h>
+#include <tpm2_private.h>
 
 #define LOCALITY_START_ADDRESS(x, y) ((uint16_t)(x->address + (0x1000 * y)))
 
