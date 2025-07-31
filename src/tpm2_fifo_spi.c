@@ -23,7 +23,11 @@ const struct spi_plat *tpm_spidev;
 
 static int tpm2_spi_transfer(const void *data_out, void *data_in, uint8_t len)
 {
-	return tpm_spidev->ops->xfer(tpm_spidev->priv, len, data_out, data_in);
+	int r = tpm_spidev->ops->xfer(tpm_spidev->priv, len, data_out, data_in);
+	if (r != 0) {
+		tpm_last_transport_error = r;
+	}
+	return r;
 }
 
 /*
@@ -132,7 +136,7 @@ static int tpm2_fifo_io(uint16_t tpm_reg, tpm_access_t access, uint8_t len,
 			       (access == TPM_ACCESS_READ) ? val : NULL, len);
 	if (rc != 0) {
 		tpm2_spi_end_transaction();
-		return rc;
+		return TPM_ERR_TRANSFER;
 	}
 
 	tpm2_spi_end_transaction();

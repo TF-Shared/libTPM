@@ -28,6 +28,8 @@ struct tpm_timeout_ops {
 	uint64_t (*timeout_init_us)(uint32_t usec);
 	bool (*timeout_elapsed)(uint64_t cnt);
 };
+int tpm_get_last_transport_error(void);
+
 int tpm_interface_init(const struct spi_plat *transport,
 		       const struct tpm_timeout_ops *timeout_ops,
 		       struct tpm_chip_data *chip_data, uint8_t locality);

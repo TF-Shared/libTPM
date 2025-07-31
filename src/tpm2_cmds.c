@@ -19,6 +19,7 @@
 
 static struct interface_ops *interface;
 struct tpm_timeout_ops tpm_timeout_ops;
+int tpm_last_transport_error = 0;
 
 static int tpm_xfer(struct tpm_chip_data *chip_data, const tpm_cmd *send,
 		    tpm_cmd *receive)
@@ -38,6 +39,11 @@ static int tpm_xfer(struct tpm_chip_data *chip_data, const tpm_cmd *send,
 	}
 
 	return TPM_SUCCESS;
+}
+
+int tpm_get_last_transport_error(void)
+{
+	return tpm_last_transport_error;
 }
 
 int tpm_interface_init(const struct spi_plat *transport,
