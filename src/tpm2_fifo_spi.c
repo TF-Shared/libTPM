@@ -14,12 +14,11 @@
 #include <tpm2_private.h>
 #include <transport/spi.h>
 
-#define ENCODE_LIMIT 128
-#define CS_ASSERT_OFFSET 0xD4
-#define RETRY_COUNT 50
+#define ENCODE_LIMIT 64U
+#define TPM_SPI_ADDR_PREFIX 0xD4U
+#define RETRY_COUNT 50U
 
-#define TPM_READ false
-#define TPM_WRITE true
+typedef enum { TPM_ACCESS_READ = 0, TPM_ACCESS_WRITE = 1 } tpm_access_t;
 
 const struct spi_plat *tpm_spidev;
 
@@ -31,7 +30,8 @@ static int tpm2_spi_transfer(const void *data_out, void *data_in, uint8_t len)
 /*
  * Reference: TCG PC Client Platform TPM Profile (PTP) Specification v1.05
  */
-static int tpm2_spi_start_transaction(uint16_t tpm_reg, bool write, uint8_t len)
+static int tpm2_spi_start_transaction(uint16_t tpm_reg, tpm_access_t access,
+				      uint8_t len)
 {
 	int rc;
 	uint8_t header[4];
@@ -52,15 +52,15 @@ static int tpm2_spi_start_transaction(uint16_t tpm_reg, bool write, uint8_t len)
 	/* header[0] contains the r/w and the xfer size, if the msb is not
 	 * set, the operation is write, if it is set then it is read.
 	 * The size of the transfer is encoded, and must not overwrite
-	 * the msb, therefore an ENCODE LIMIT of 128 is present.
+	 * the two msb, therefore an ENCODE LIMIT of 64.
 	 */
-	header[0] = ((write) ? 0x00 : 0x80) | (len - 1);
+	header[0] = ((access == TPM_ACCESS_WRITE) ? 0x00 : 0x80) | (len - 1);
 
 	/*
 	 * header[1] contains the address offset 0xD4_xxxx as defined
-	 * in the TPM spec, since the CS# is asserted.
+	 * in the TPM spec.
 	 */
-	header[1] = CS_ASSERT_OFFSET;
+	header[1] = TPM_SPI_ADDR_PREFIX;
 
 	/*
 	 * header[2] and header[3] contain the address of the register
@@ -116,19 +116,21 @@ static void tpm2_spi_init(void)
 	tpm_spidev->ops->start(tpm_spidev->priv);
 }
 
-static int tpm2_fifo_io(uint16_t tpm_reg, bool is_write, uint8_t len, void *val)
+static int tpm2_fifo_io(uint16_t tpm_reg, tpm_access_t access, uint8_t len,
+			void *val)
 {
 	int rc;
 
 	tpm2_spi_init();
-	rc = tpm2_spi_start_transaction(tpm_reg, is_write, len);
+	
+	rc = tpm2_spi_start_transaction(tpm_reg, access, len);
 	if (rc != 0) {
 		tpm2_spi_end_transaction();
 		return rc;
 	}
 
-	rc = tpm2_spi_transfer(is_write ? val : NULL, is_write ? NULL : val,
-			       len);
+	rc = tpm2_spi_transfer((access == TPM_ACCESS_WRITE) ? val : NULL,
+			       (access == TPM_ACCESS_READ) ? val : NULL, len);
 	if (rc != 0) {
 		tpm2_spi_end_transaction();
 		return rc;
@@ -141,19 +143,19 @@ static int tpm2_fifo_io(uint16_t tpm_reg, bool is_write, uint8_t len, void *val)
 
 int tpm2_fifo_write_byte(uint16_t tpm_reg, uint8_t val)
 {
-	return tpm2_fifo_io(tpm_reg, TPM_WRITE, BYTE, &val);
+	return tpm2_fifo_io(tpm_reg, TPM_ACCESS_WRITE, 1, &val);
 }
 
 int tpm2_fifo_read_byte(uint16_t tpm_reg, uint8_t *val)
 {
-	return tpm2_fifo_io(tpm_reg, TPM_READ, BYTE, val);
+	return tpm2_fifo_io(tpm_reg, TPM_ACCESS_READ, 1, val);
 }
 
 int tpm2_fifo_read_chunk(uint16_t tpm_reg, uint8_t len, void *val)
 {
-	if ((len != BYTE) && (len != WORD) && (len != DWORD)) {
+	if ((len != 1) && (len != 2) && (len != 4)) {
 		return TPM_INVALID_PARAM;
 	}
 
-	return tpm2_fifo_io(tpm_reg, TPM_READ, len, val);
+	return tpm2_fifo_io(tpm_reg, TPM_ACCESS_READ, len, val);
 }

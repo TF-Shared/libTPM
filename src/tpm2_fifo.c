@@ -12,6 +12,8 @@
 
 #define LOCALITY_START_ADDRESS(x, y) ((uint16_t)(x->address + (0x1000 * y)))
 
+TPM_STATIC_ASSERT(sizeof(uint16_t) == 2, unexpected_uint16_t_size);
+
 static int tpm2_get_info(struct tpm_chip_data *chip_data, uint8_t locality)
 {
 	uint16_t tpm_base_addr = LOCALITY_START_ADDRESS(chip_data, locality);
@@ -19,8 +21,8 @@ static int tpm2_get_info(struct tpm_chip_data *chip_data, uint8_t locality)
 	uint8_t revision;
 	int err;
 
-	err = tpm2_fifo_read_chunk(tpm_base_addr + TPM_FIFO_REG_VENDID, DWORD,
-				   &vid_did);
+	err = tpm2_fifo_read_chunk(tpm_base_addr + TPM_FIFO_REG_VENDID,
+				   sizeof(vid_did), &vid_did);
 	if (err < 0) {
 		return err;
 	}
@@ -41,6 +43,7 @@ static int tpm2_wait_reg_bits(uint16_t reg, uint8_t set, unsigned long timeout,
 			      uint8_t *status)
 {
 	int err;
+	unsigned int i = 0;
 	uint64_t timeout_delay =
 		tpm_timeout_ops.timeout_init_us(timeout * 1000);
 
@@ -52,6 +55,7 @@ static int tpm2_wait_reg_bits(uint16_t reg, uint8_t set, unsigned long timeout,
 		if ((*status & set) == set) {
 			return TPM_SUCCESS;
 		}
+		i++;
 	} while (!tpm_timeout_ops.timeout_elapsed(timeout_delay));
 
 	return TPM_ERR_TIMEOUT;

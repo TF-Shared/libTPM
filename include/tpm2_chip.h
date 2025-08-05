@@ -10,10 +10,6 @@
 #ifndef TPM2_CHIP_H
 #define TPM2_CHIP_H
 
-#define BYTE 0x1U
-#define WORD 0x2U
-#define DWORD 0x4U
-
 struct tpm_chip_data {
 	uint8_t locality;
 	unsigned long timeout_msec_a, timeout_msec_b;

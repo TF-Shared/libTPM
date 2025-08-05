@@ -12,65 +12,86 @@
 /*
  * TPM FIFO register space address offsets
  */
-#define TPM_FIFO_REG_ACCESS	0x00
-#define TPM_FIFO_REG_INTR_ENABLE	0x08
-#define TPM_FIFO_REG_INTR_VECTOR	0x0C
-#define TPM_FIFO_REG_INTR_STS	0x10
-#define TPM_FIFO_REG_INTF_CAPS	0x14
-#define TPM_FIFO_REG_STATUS	0x18
-#define TPM_FIFO_REG_BURST_COUNT_LO	0x19
-#define TPM_FIFO_REG_BURST_COUNT_HI	0x20
-#define TPM_FIFO_REG_DATA_FIFO	0x24
-#define TPM_FIFO_REG_VENDID	0xF00
-#define TPM_FIFO_REG_DEVID	0xF02
-#define TPM_FIFO_REG_REVID	0xF04
+#define TPM_FIFO_REG_ACCESS	((uint32_t)0x000U)
+#define TPM_FIFO_REG_INTR_ENABLE	((uint32_t)0x008U)
+#define TPM_FIFO_REG_INTR_VECTOR	((uint32_t)0x00CU)
+#define TPM_FIFO_REG_INTR_STS	((uint32_t)0x010U)
+#define TPM_FIFO_REG_INTF_CAPS	((uint32_t)0x014U)
+#define TPM_FIFO_REG_STATUS	((uint32_t)0x018U)
+#define TPM_FIFO_REG_BURST_COUNT_LO	((uint32_t)0x019U)
+#define TPM_FIFO_REG_BURST_COUNT_HI	((uint32_t)0x020U)
+#define TPM_FIFO_REG_DATA_FIFO	((uint32_t)0x024U)
+#define TPM_FIFO_REG_VENDID	((uint32_t)0xF00U)
+#define TPM_FIFO_REG_DEVID	((uint32_t)0xF02U)
+#define TPM_FIFO_REG_REVID	((uint32_t)0xF04U)
 
-#define TPM_ST_NO_SESSIONS	0x8001U
-#define TPM_ST_SESSIONS	0x8002U
+/* Structure tags (16-bit) */
+#define TPM_ST_NO_SESSIONS	((uint16_t)0x8001U)
+#define TPM_ST_SESSIONS	((uint16_t)0x8002U)
 
-#define TPM_MIN_AUTH_SIZE	9
-#define TPM_RS_PW	0x40000009
-#define TPM_ZERO_NONCE_SIZE	0
-#define TPM_ATTRIBUTES_DISABLE	0
-#define TPM_ZERO_HMAC_SIZE	0
-#define TPM_SINGLE_HASH_COUNT	1
+/* Sizes / handles */
+#define TPM_MIN_AUTH_SIZE	((uint32_t)9U)
+#define TPM_RS_PW	((uint32_t)0x40000009UL)
+#define TPM_ZERO_NONCE_SIZE	((uint32_t)0U)
+#define TPM_ATTRIBUTES_DISABLE	((uint32_t)0U)
+#define TPM_ZERO_HMAC_SIZE	((uint32_t)0U)
+#define TPM_SINGLE_HASH_COUNT	((uint32_t)1U)
 
-#define TPM_CMD_STARTUP	0x0144U
-#define TPM_CMD_PCR_READ	0x017EU
-#define TPM_CMD_PCR_EXTEND	0x0182U
+/* Commands (16-bit) */
+#define TPM_CMD_STARTUP	((uint16_t)0x0144U)
+#define TPM_CMD_PCR_READ	((uint16_t)0x017EU)
+#define TPM_CMD_PCR_EXTEND	((uint16_t)0x0182U)
 
-#define TPM_RESPONSE_SUCCESS	0x0000U
+/* Response codes (16-bit) */
+#define TPM_RESPONSE_SUCCESS	((uint16_t)0x0000U)
 
-#define TPM_ACCESS_ACTIVE_LOCALITY	(1 << 5U)
-#define TPM_ACCESS_VALID	(1 << 7U)
-#define TPM_ACCESS_RELINQUISH_LOCALITY	(1 << 5U)
-#define TPM_ACCESS_REQUEST_USE	(1 << 1U)
-#define TPM_ACCESS_REQUEST_PENDING	(1 << 2U)
+/* ACCESS register bit masks (8-bit) */
+#define TPM_ACCESS_ACTIVE_LOCALITY	((uint8_t)(1U << 5))
+#define TPM_ACCESS_VALID	((uint8_t)(1U << 7))
+#define TPM_ACCESS_RELINQUISH_LOCALITY	((uint8_t)(1U << 5))
+#define TPM_ACCESS_REQUEST_USE	((uint8_t)(1U << 1))
+#define TPM_ACCESS_REQUEST_PENDING	((uint8_t)(1U << 2))
 
-#define TPM_STAT_VALID	(1 << 7U)
-#define TPM_STAT_COMMAND_READY	(1 << 6U)
-#define TPM_STAT_GO	(1 << 5U)
-#define TPM_STAT_AVAIL	(1 << 4U)
-#define TPM_STAT_EXPECT	(1 << 3U)
+/* STATUS register bit masks (8-bit) */
+#define TPM_STAT_VALID	((uint8_t)(1U << 7))
+#define TPM_STAT_COMMAND_READY	((uint8_t)(1U << 6))
+#define TPM_STAT_GO	((uint8_t)(1U << 5))
+#define TPM_STAT_AVAIL	((uint8_t)(1U << 4))
+#define TPM_STAT_EXPECT	((uint8_t)(1U << 3))
 
-#define TPM_READ_HEADER	-1
+#define TPM_READ_HEADER	((int32_t)-1)
 
-#define TPM_HEADER_SIZE	10
-#define MAX_SIZE_CMDBUF	256
-#define MAX_CMD_DATA	(MAX_SIZE_CMDBUF - TPM_HEADER_SIZE)
+#define TPM_HEADER_SIZE	((uint32_t)10U)
+#define MAX_SIZE_CMDBUF	((uint32_t)256U)
+#define MAX_CMD_DATA	((uint32_t)(MAX_SIZE_CMDBUF - TPM_HEADER_SIZE))
 
-#pragma pack(1U)
-typedef struct tpm_cmd_hdr {
+/*
+ * Provide a backward-compatible implementation of static_assert.
+ * This keyword was introduced in C11, so it may be unavailable in
+ * projects targeting older C standards.
+ */
+#if __STDC_VERSION__ >= 201112L
+#define TPM_STATIC_ASSERT(cond, msg) _Static_assert(cond, #msg)
+#else
+#define TPM_STATIC_ASSERT(cond, msg) \
+	typedef char static_assertion_##msg[(cond) ? 1 : -1]
+#endif
+
+struct tpm_cmd_hdr {
 	uint16_t tag;
 	uint32_t cmd_size;
 	uint32_t cmd_code;
-} tpm_cmd_hdr;
+} __attribute__((__packed__));
+typedef struct tpm_cmd_hdr tpm_cmd_hdr;
 
-typedef struct tpm_cmd {
+struct tpm_cmd {
 	tpm_cmd_hdr header;
 	uint8_t data[MAX_CMD_DATA];
-} tpm_cmd;
-#pragma pack()
+} __attribute__((__packed__));
+typedef struct tpm_cmd tpm_cmd;
+
+TPM_STATIC_ASSERT(sizeof(tpm_cmd_hdr) == TPM_HEADER_SIZE,
+		  tpm_cmd_hdr__incorrect_size);
 
 typedef struct interface_ops {
 	int (*get_info)(struct tpm_chip_data *chip_data, uint8_t locality);
