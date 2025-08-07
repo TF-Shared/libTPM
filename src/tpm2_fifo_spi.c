@@ -111,12 +111,20 @@ static int tpm2_spi_start_transaction(uint16_t tpm_reg, tpm_access_t access,
 static void tpm2_spi_end_transaction(void)
 {
 	tpm_spidev->ops->stop(tpm_spidev->priv);
+	tpm_spidev->ops->release_access(tpm_spidev->priv);
 }
 
-static void tpm2_spi_init(void)
+static int tpm2_spi_init(void)
 {
-	tpm_spidev->ops->get_access(tpm_spidev->priv);
+	int rc;
+
+	rc = tpm_spidev->ops->get_access(tpm_spidev->priv);
+	if (rc != 0) {
+		tpm_last_transport_error = rc;
+		return TPM_ERR_TRANSFER;
+	}
 	tpm_spidev->ops->start(tpm_spidev->priv);
+	return 0;
 }
 
 static int tpm2_fifo_io(uint16_t tpm_reg, tpm_access_t access, uint8_t len,
@@ -124,8 +132,11 @@ static int tpm2_fifo_io(uint16_t tpm_reg, tpm_access_t access, uint8_t len,
 {
 	int rc;
 
-	tpm2_spi_init();
-	
+	rc = tpm2_spi_init();
+	if (rc != 0) {
+		return rc;
+	}
+
 	rc = tpm2_spi_start_transaction(tpm_reg, access, len);
 	if (rc != 0) {
 		tpm2_spi_end_transaction();

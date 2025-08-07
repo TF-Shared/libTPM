@@ -2,7 +2,8 @@
 #define SPI_TRANSPORT_H
 
 struct spi_ops {
-	void (*get_access)(void *ctx);
+	int (*get_access)(void *ctx);
+	void (*release_access)(void *ctx);
 	void (*start)(void *ctx);
 	void (*stop)(void *ctx);
 	int (*xfer)(void *ctx, unsigned int bytelen,
