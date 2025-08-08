@@ -10,11 +10,14 @@
 #ifndef TPM2_CHIP_H
 #define TPM2_CHIP_H
 
+struct tpm_chip_timeouts {
+	unsigned long msec_a, msec_b;
+	unsigned long msec_c, msec_d;
+};
+
 struct tpm_chip_data {
 	uint8_t locality;
-	unsigned long timeout_msec_a, timeout_msec_b;
-	unsigned long timeout_msec_c, timeout_msec_d;
-	uint16_t address;
+	const struct tpm_chip_timeouts *timeouts;
 };
 
 #endif /* TPM2_CHIP_H */

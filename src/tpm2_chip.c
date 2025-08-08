@@ -11,11 +11,14 @@
  * TPM timeout values
  * Reference: TCG PC Client Platform TPM Profile (PTP) Specification v1.05
  */
+const struct tpm_chip_timeouts tpm_timeouts = {
+	.msec_a = 750,
+	.msec_b = 2000,
+	.msec_c = 200,
+	.msec_d = 30,
+};
+
 struct tpm_chip_data tpm_chip_data = {
 	.locality = -1,
-	.timeout_msec_a = 750,
-	.timeout_msec_b = 2000,
-	.timeout_msec_c = 200,
-	.timeout_msec_d = 30,
-	.address = 0,
+	.timeouts = &tpm_timeouts,
 };
