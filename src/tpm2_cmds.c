@@ -17,6 +17,7 @@
 #define FOUR_BYTES 4
 
 static struct interface_ops *interface;
+struct tpm_timeout_ops tpm_timeout_ops;
 
 static int tpm_xfer(struct tpm_chip_data *chip_data, const tpm_cmd *send,
 		    tpm_cmd *receive)
@@ -36,10 +37,15 @@ static int tpm_xfer(struct tpm_chip_data *chip_data, const tpm_cmd *send,
 	return TPM_SUCCESS;
 }
 
-int tpm_interface_init(struct tpm_chip_data *chip_data, uint8_t locality)
+int tpm_interface_init(const struct tpm_timeout_ops *timeout_ops,
+		       struct tpm_chip_data *chip_data, uint8_t locality)
 {
 	int err;
 
+	if (timeout_ops == NULL) {
+		return TPM_INVALID_PARAM;
+	}
+	tpm_timeout_ops = *timeout_ops;
 	interface = tpm_interface_getops(chip_data, locality);
 
 	err = interface->request_access(chip_data, locality);

@@ -19,6 +19,8 @@ typedef struct interface_ops {
 				uint8_t locality);
 } interface_ops_t;
 
+extern struct tpm_timeout_ops tpm_timeout_ops;
+
 struct interface_ops *tpm_interface_getops(struct tpm_chip_data *chip_data,
 					   uint8_t locality);
 

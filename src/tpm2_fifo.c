@@ -40,7 +40,8 @@ static int tpm2_wait_reg_bits(uint16_t reg, uint8_t set, unsigned long timeout,
 			      uint8_t *status)
 {
 	int err;
-	uint64_t timeout_delay = timeout_init_us(timeout * 1000);
+	uint64_t timeout_delay =
+		tpm_timeout_ops.timeout_init_us(timeout * 1000);
 
 	do {
 		err = tpm2_fifo_read_byte(reg, status);
@@ -50,7 +51,7 @@ static int tpm2_wait_reg_bits(uint16_t reg, uint8_t set, unsigned long timeout,
 		if ((*status & set) == set) {
 			return TPM_SUCCESS;
 		}
-	} while (!timeout_elapsed(timeout_delay));
+	} while (!tpm_timeout_ops.timeout_elapsed(timeout_delay));
 
 	return TPM_ERR_TIMEOUT;
 }
@@ -129,8 +130,8 @@ static int tpm2_fifo_get_burstcount(struct tpm_chip_data *chip_data,
 {
 	uint16_t tpm_base_addr =
 		LOCALITY_START_ADDRESS(chip_data, chip_data->locality);
-	uint64_t timeout_delay =
-		timeout_init_us(chip_data->timeout_msec_a * 1000);
+	uint64_t timeout_delay = tpm_timeout_ops.timeout_init_us(
+		chip_data->timeout_msec_a * 1000);
 	int err;
 
 	if (burstcount == NULL) {
@@ -156,7 +157,7 @@ static int tpm2_fifo_get_burstcount(struct tpm_chip_data *chip_data,
 		if (*burstcount != 0U) {
 			return TPM_SUCCESS;
 		}
-	} while (!timeout_elapsed(timeout_delay));
+	} while (!tpm_timeout_ops.timeout_elapsed(timeout_delay));
 
 	return TPM_ERR_TIMEOUT;
 }

@@ -20,8 +20,6 @@
 #define WARN printf
 #define ERROR printf
 
-uint64_t timeout_init_us(uint32_t usec);
-bool timeout_elapsed(uint64_t cnt);
 
 /* Return values */
 enum tpm_ret_value {
@@ -98,7 +96,13 @@ typedef struct tpm_cmd {
 } tpm_cmd;
 #pragma pack()
 
-int tpm_interface_init(struct tpm_chip_data *chip_data, uint8_t locality);
+struct tpm_timeout_ops {
+	uint64_t (*timeout_init_us)(uint32_t usec);
+	bool (*timeout_elapsed)(uint64_t cnt);
+};
+
+int tpm_interface_init(const struct tpm_timeout_ops *timeout_ops,
+		       struct tpm_chip_data *chip_data, uint8_t locality);
 
 int tpm_interface_close(struct tpm_chip_data *chip_data, uint8_t locality);
 
