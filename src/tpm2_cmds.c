@@ -37,11 +37,12 @@ static int tpm_xfer(struct tpm_chip_data *chip_data, const tpm_cmd *send,
 	return TPM_SUCCESS;
 }
 
-int tpm_interface_init(const struct tpm_timeout_ops *timeout_ops,
+int tpm_interface_init(const struct spi_plat *transport,
+		       const struct tpm_timeout_ops *timeout_ops,
 		       struct tpm_chip_data *chip_data, uint8_t locality)
 {
 	int err;
-
+	tpm_spidev = transport;
 	if (timeout_ops == NULL) {
 		return TPM_INVALID_PARAM;
 	}

@@ -20,6 +20,7 @@
 #define WARN printf
 #define ERROR printf
 
+extern const struct spi_plat *tpm_spidev;
 
 /* Return values */
 enum tpm_ret_value {
@@ -101,7 +102,8 @@ struct tpm_timeout_ops {
 	bool (*timeout_elapsed)(uint64_t cnt);
 };
 
-int tpm_interface_init(const struct tpm_timeout_ops *timeout_ops,
+int tpm_interface_init(const struct spi_plat *transport,
+		       const struct tpm_timeout_ops *timeout_ops,
 		       struct tpm_chip_data *chip_data, uint8_t locality);
 
 int tpm_interface_close(struct tpm_chip_data *chip_data, uint8_t locality);
