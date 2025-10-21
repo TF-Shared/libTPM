@@ -27,11 +27,13 @@ static int tpm_xfer(struct tpm_chip_data *chip_data, const tpm_cmd *send,
 
 	ret = interface->send(chip_data, send);
 	if (ret < 0) {
+		ERROR("%s: send failure %d\n", __func__, ret);
 		return ret;
 	}
 
 	ret = interface->receive(chip_data, receive);
 	if (ret < 0) {
+		ERROR("%s: receive failure %d\n", __func__, ret);
 		return ret;
 	}
 
@@ -52,6 +54,7 @@ int tpm_interface_init(const struct spi_plat *transport,
 
 	err = interface->request_access(chip_data, locality);
 	if (err != 0) {
+		ERROR("%s: request access failure %d\n", __func__, err);
 		return err;
 	}
 
