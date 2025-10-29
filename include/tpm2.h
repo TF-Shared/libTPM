@@ -8,7 +8,6 @@
 #define TPM2_H
 
 #include <assert.h>
-#include <endian.h>
 #include <errno.h>
 #include <stdint.h>
 

@@ -3,7 +3,7 @@
  *
  * SPDX-License-Identifier: BSD-3-Clause
  */
-#include <endian.h>
+#include <endian_private.h>
 
 #include <tpm2.h>
 #include <tpm2_chip.h>
