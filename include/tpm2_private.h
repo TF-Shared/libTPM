@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2025, Arm Limited. All rights reserved.
+ * Copyright (c) 2025-2026, Arm Limited. All rights reserved.
  *
  * SPDX-License-Identifier: BSD-3-Clause
  */
@@ -105,7 +105,7 @@ typedef struct interface_ops {
 } interface_ops_t;
 
 extern struct tpm_timeout_ops tpm_timeout_ops;
-extern const struct spi_plat *tpm_spidev;
+extern const struct tpm_spi_plat *tpm_spidev;
 extern int tpm_last_transport_error;
 
 struct interface_ops *tpm_interface_getops(struct tpm_chip_data *chip_data,

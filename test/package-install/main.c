@@ -3,7 +3,7 @@
 #include <tpm2/spi.h>
 #include <tpm2/tpm2.h>
 
-const struct spi_plat *tpm_spidev;
+const struct tpm_spi_plat *tpm_spidev;
 
 int main(void)
 {

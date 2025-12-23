@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2025, Arm Limited. All rights reserved.
+ * Copyright (c) 2025-2026, Arm Limited. All rights reserved.
  *
  * SPDX-License-Identifier: BSD-3-Clause
  */
@@ -46,7 +46,7 @@ int tpm_get_last_transport_error(void)
 	return tpm_last_transport_error;
 }
 
-int tpm_interface_init(const struct spi_plat *transport,
+int tpm_interface_init(const struct tpm_spi_plat *transport,
 		       const struct tpm_timeout_ops *timeout_ops,
 		       struct tpm_chip_data *chip_data, uint8_t locality)
 {

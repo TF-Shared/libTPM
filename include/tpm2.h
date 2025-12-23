@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2025, Arm Limited. All rights reserved.
+ * Copyright (c) 2025-2026, Arm Limited. All rights reserved.
  *
  * SPDX-License-Identifier: BSD-3-Clause
  */
@@ -10,7 +10,7 @@
 #include "tpm2_chip.h"
 #include <errno.h>
 #include <stdint.h>
-struct spi_plat;
+struct tpm_spi_plat;
 
 #define TPM_SU_CLEAR 0x0000U
 #define TPM_SU_STATE 0x0001U
@@ -30,7 +30,7 @@ struct tpm_timeout_ops {
 };
 int tpm_get_last_transport_error(void);
 
-int tpm_interface_init(const struct spi_plat *transport,
+int tpm_interface_init(const struct tpm_spi_plat *transport,
 		       const struct tpm_timeout_ops *timeout_ops,
 		       struct tpm_chip_data *chip_data, uint8_t locality);
 

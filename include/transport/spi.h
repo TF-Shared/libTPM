@@ -1,7 +1,13 @@
-#ifndef SPI_TRANSPORT_H
-#define SPI_TRANSPORT_H
+/*
+ * Copyright (c) 2025-2026, Arm Limited. All rights reserved.
+ *
+ * SPDX-License-Identifier: BSD-3-Clause
+ */
 
-struct spi_ops {
+#ifndef TPM_SPI_TRANSPORT_H
+#define TPM_SPI_TRANSPORT_H
+
+struct tpm_spi_ops {
 	int (*get_access)(void *ctx);
 	void (*release_access)(void *ctx);
 	void (*start)(void *ctx);
@@ -10,11 +16,13 @@ struct spi_ops {
 		    const void *dout, void *din);
 };
 
-struct spi_priv;
+struct tpm_spi_priv;
 
-struct spi_plat {
-	struct spi_priv *priv;
-	const struct spi_ops *ops;
+struct tpm_spi_plat {
+	struct tpm_spi_priv *priv;
+	const struct tpm_spi_ops *ops;
 };
 
-#endif /* SPI_TRANSPORT_H */
+
+
+#endif /* TPM_SPI_TRANSPORT_H */

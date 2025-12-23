@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2025, Arm Limited. All rights reserved.
+ * Copyright (c) 2025-2026, Arm Limited. All rights reserved.
  *
  * SPDX-License-Identifier: BSD-3-Clause
  */
@@ -19,7 +19,7 @@
 
 typedef enum { TPM_ACCESS_READ = 0, TPM_ACCESS_WRITE = 1 } tpm_access_t;
 
-const struct spi_plat *tpm_spidev;
+const struct tpm_spi_plat *tpm_spidev;
 
 static int tpm2_spi_transfer(const void *data_out, void *data_in, uint8_t len)
 {
