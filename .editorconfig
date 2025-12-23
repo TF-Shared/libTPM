@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2020, Arm Limited and Contributors. All rights reserved.
+# Copyright (c) 2020-2026, Arm Limited and Contributors. All rights reserved.
 #
 # SPDX-License-Identifier: BSD-3-Clause
 #
@@ -14,7 +14,7 @@ root = true
 [*]
 # Windows .bat files may have trouble with utf8 and will fail with lf line ends.
 # Currently no plans to add .bat files, but this can be an issue in the future.
-charset = uft-8
+charset = utf-8
 end_of_line = lf
 trim_trailing_whitespace = true
 indent_size = 4
