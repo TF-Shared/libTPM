@@ -7,10 +7,10 @@
 #ifndef TPM2_H
 #define TPM2_H
 
-#include "tpm2_chip.h"
 #include <errno.h>
 #include <stdint.h>
-struct tpm_spi_plat;
+#include "platform/tpm_platform.h"
+#include "tpm2_chip.h"
 
 #define TPM_SU_CLEAR 0x0000U
 #define TPM_SU_STATE 0x0001U
@@ -24,10 +24,6 @@ enum tpm_ret_value {
 	TPM_ERR_TRANSFER = -4,
 };
 
-struct tpm_timeout_ops {
-	uint64_t (*timeout_init_us)(uint32_t usec);
-	bool (*timeout_elapsed)(uint64_t cnt);
-};
 int tpm_get_last_transport_error(void);
 
 int tpm_interface_init(const struct tpm_spi_plat *transport,
