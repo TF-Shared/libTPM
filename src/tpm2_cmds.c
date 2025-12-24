@@ -252,3 +252,95 @@ int tpm_pcr_extend(struct tpm_chip_data *chip_data, uint32_t index,
 
 	return TPM_SUCCESS;
 }
+
+int tpm_pcr_read_single(struct tpm_chip_data *chip_data, uint32_t index,
+			uint16_t algorithm,
+			uint8_t *pcr_digest_read,
+			size_t pcr_digest_read_len)
+{
+	tpm_cmd pcr_read_cmd, pcr_read_res;
+	uint32_t tpm_rc;
+	int ret;
+	size_t data_size;
+	uint16_t digest_len;
+	struct tpm_pcr_single_read_res tpm_read_response;
+
+	if (index >= TPM_PCR_SELECT_SIZE * 8) {
+		ERROR("%s: PCR index out of range\n", __func__);
+		return TPM_INVALID_PARAM;
+	}
+	uint32_t pcr_bitmask = 1U << index;
+
+	if (pcr_digest_read == NULL) {
+		return TPM_INVALID_PARAM;
+	}
+
+	memset(&pcr_read_cmd, 0, sizeof(pcr_read_cmd));
+	memset(pcr_digest_read, 0, pcr_digest_read_len);
+
+	pcr_read_cmd.header.tag = htobe16(TPM_ST_NO_SESSIONS);
+	pcr_read_cmd.header.cmd_size = htobe32(sizeof(tpm_cmd_hdr));
+	pcr_read_cmd.header.cmd_code = htobe32(TPM_CMD_PCR_READ);
+
+	/* TPML_PCR_SELECTION (count) */
+	ret = tpm_update_buffer(&pcr_read_cmd, 1,
+				sizeof(uint32_t)); /* Read 1 PCR only */
+	if (ret < 0) {
+		return ret;
+	}
+
+	/* TPMS_PCR_SELECTION (Hash algorithm) */
+	ret = tpm_update_buffer(&pcr_read_cmd, algorithm, sizeof(algorithm));
+	if (ret < 0) {
+		return ret;
+	}
+
+	/* TPMS_PCR_SELECTION (PCR_SELECT_MIN) */
+	ret = tpm_update_buffer(&pcr_read_cmd, TPM_PCR_SELECT_SIZE, sizeof(uint8_t));
+	if (ret < 0) {
+		return ret;
+	}
+
+	/* TPMS_PCR_SELECTION (pcrSelect) */
+	/* NOT stored in big endian */
+	tpm_update_buffer(&pcr_read_cmd, pcr_bitmask & 0xFF, sizeof(uint8_t));
+	tpm_update_buffer(&pcr_read_cmd, (pcr_bitmask >> 8) & 0xFF, sizeof(uint8_t));
+	tpm_update_buffer(&pcr_read_cmd, (pcr_bitmask >> 16) & 0xFF, sizeof(uint8_t));
+
+	ret = tpm_xfer(chip_data, &pcr_read_cmd, &pcr_read_res);
+	if (ret < 0) {
+		return ret;
+	}
+
+	tpm_rc = be32toh(pcr_read_res.header.cmd_code);
+	if (tpm_rc != TPM_RESPONSE_SUCCESS) {
+		ERROR("%s: response code contains error = %x\n", __func__,
+		      tpm_rc);
+		return TPM_ERR_RESPONSE;
+	}
+
+	data_size = be32toh(pcr_read_res.header.cmd_size) - TPM_HEADER_SIZE;
+	if (data_size > sizeof(struct tpm_pcr_single_read_res) ||
+		data_size < offsetof(struct tpm_pcr_single_read_res, digest)) {
+		ERROR("%s: Abnormal command size reported\n", __func__);
+		return TPM_ERR_RESPONSE;
+	}
+
+	memcpy(&tpm_read_response, pcr_read_res.data, sizeof(struct tpm_pcr_single_read_res));
+
+	digest_len = be16toh(tpm_read_response.tpml_digest_size);
+	if (digest_len > MAX_DIGEST_SIZE || digest_len > pcr_digest_read_len) {
+		ERROR("%s: Buffer passed for returning digest has insufficient space\n", __func__);
+		return TPM_INVALID_PARAM;
+	}
+
+	if (offsetof(struct tpm_pcr_single_read_res, digest) + digest_len > data_size) {
+		ERROR("%s: Insufficient data read\n", __func__);
+		return TPM_ERR_RESPONSE;
+	}
+
+	/* Copy digest returned from PCR read  */
+	memcpy(pcr_digest_read, tpm_read_response.digest, digest_len);
+
+	return TPM_SUCCESS;
+}

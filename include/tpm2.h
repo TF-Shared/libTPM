@@ -15,6 +15,8 @@
 #define TPM_SU_CLEAR 0x0000U
 #define TPM_SU_STATE 0x0001U
 
+#define TPM_ALG_SHA256	((uint16_t)0x000BU)
+
 /* Return values */
 enum tpm_ret_value {
 	TPM_SUCCESS = 0,
@@ -37,5 +39,10 @@ int tpm_startup(struct tpm_chip_data *chip_data, uint16_t mode);
 int tpm_pcr_extend(struct tpm_chip_data *chip_data, uint32_t index,
 		   uint16_t algorithm, const uint8_t *digest,
 		   uint32_t digest_len);
+
+int tpm_pcr_read_single(struct tpm_chip_data *chip_data, uint32_t index,
+			uint16_t algorithm,
+			uint8_t *pcr_digest_read,
+			size_t pcr_digest_read_len);
 
 #endif /* TPM2_H */

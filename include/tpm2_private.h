@@ -37,6 +37,8 @@
 #define TPM_ATTRIBUTES_DISABLE	((uint32_t)0U)
 #define TPM_ZERO_HMAC_SIZE	((uint32_t)0U)
 #define TPM_SINGLE_HASH_COUNT	((uint32_t)1U)
+/* 24 PCRs bit-mask with 3 bytes */
+#define TPM_PCR_SELECT_SIZE	((uint8_t)0x3U)
 
 /* Commands (16-bit) */
 #define TPM_CMD_STARTUP	((uint16_t)0x0144U)
@@ -65,6 +67,7 @@
 #define TPM_HEADER_SIZE	((uint32_t)10U)
 #define MAX_SIZE_CMDBUF	((uint32_t)256U)
 #define MAX_CMD_DATA	((uint32_t)(MAX_SIZE_CMDBUF - TPM_HEADER_SIZE))
+#define MAX_DIGEST_SIZE	((uint32_t)32U)
 
 /*
  * Provide a backward-compatible implementation of static_assert.
@@ -90,6 +93,16 @@ struct tpm_cmd {
 	uint8_t data[MAX_CMD_DATA];
 } __attribute__((__packed__));
 typedef struct tpm_cmd tpm_cmd;
+
+struct tpm_pcr_single_read_res {
+	uint32_t pcr_update_ctr;
+	uint32_t tpml_pcr_selection_count;
+	uint16_t tpms_pcr_selection_hash;
+	uint32_t tpms_pcr_selection_num_octate_bitmap;
+	uint32_t tpml_digest_count;
+	uint16_t tpml_digest_size;
+	uint8_t digest[MAX_DIGEST_SIZE];
+} __attribute__((packed));
 
 TPM_STATIC_ASSERT(sizeof(tpm_cmd_hdr) == TPM_HEADER_SIZE,
 		  tpm_cmd_hdr__incorrect_size);
