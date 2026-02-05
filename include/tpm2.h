@@ -7,15 +7,26 @@
 #ifndef TPM2_H
 #define TPM2_H
 
-#include <errno.h>
-#include <stdint.h>
 #include "platform/tpm_platform.h"
 #include "tpm2_chip.h"
+#include <assert.h>
+#include <errno.h>
+#include <stdbool.h>
+#include <stdint.h>
 
 #define TPM_SU_CLEAR 0x0000U
 #define TPM_SU_STATE 0x0001U
 
-#define TPM_ALG_SHA256	((uint16_t)0x000BU)
+#define TPM_ALG_SHA256 ((uint16_t)0x000BU)
+#define TPM_ALG_NULL ((uint16_t)0x0010U)
+/* 24 PCRs bit-mask with 3 bytes */
+#define TPM_PCR_SELECT_SIZE ((uint8_t)0x3U)
+
+/* LibTPM GetCapability limits */
+#define TPM_DEFAULT_PAGE_COUNT ((uint32_t)16U)
+#define TPM_MAX_PAGES ((uint32_t)64U)
+#define TPM_MAX_PCR_SELECTIONS ((uint32_t)8U)
+#define TPM_MAX_ALG_PROPERTIES ((uint32_t)64U)
 
 /* Return values */
 enum tpm_ret_value {
@@ -24,7 +35,35 @@ enum tpm_ret_value {
 	TPM_INVALID_PARAM = -2,
 	TPM_ERR_TIMEOUT = -3,
 	TPM_ERR_TRANSFER = -4,
+	TPM_ERR_ITERATION_LIMIT = -5,
 };
+
+typedef struct {
+	uint16_t alg_id; /* TPM_ALG_* host order */
+	bool enabled; /* output */
+} tpm_alg_query_t;
+
+typedef struct {
+	uint16_t hash_alg; /* TPM_ALG_* */
+	uint8_t pcr_select
+		[TPM_PCR_SELECT_SIZE]; /* output: bank mask, zero if absent */
+} tpm_pcr_bank_query_t;
+
+typedef struct {
+	uint32_t flags;
+	uint32_t count;
+} tpm_alg_props_ctx_t;
+
+typedef bool (*tpm_alg_props_cb)(uint16_t alg_id, uint32_t alg_props,
+				 tpm_alg_props_ctx_t *ctx);
+
+typedef struct {
+	uint32_t flags;
+	uint32_t count;
+} tpm_pcr_bank_ctx_t;
+
+typedef bool (*tpm_pcr_bank_cb)(uint16_t hash_alg, const uint8_t *pcr_select,
+				uint8_t sizeof_select, tpm_pcr_bank_ctx_t *ctx);
 
 int tpm_get_last_transport_error(void);
 
@@ -41,8 +80,30 @@ int tpm_pcr_extend(struct tpm_chip_data *chip_data, uint32_t index,
 		   uint32_t digest_len);
 
 int tpm_pcr_read_single(struct tpm_chip_data *chip_data, uint32_t index,
-			uint16_t algorithm,
-			uint8_t *pcr_digest_read,
+			uint16_t algorithm, uint8_t *pcr_digest_read,
 			size_t pcr_digest_read_len);
+
+enum tpm_ret_value tpm_getcap_query_algs(struct tpm_chip_data *chip,
+					 tpm_alg_query_t *query);
+
+enum tpm_ret_value tpm_getcap_query_pcrs(struct tpm_chip_data *chip,
+					 tpm_pcr_bank_query_t *query);
+
+enum tpm_ret_value tpm_has_alg(struct tpm_chip_data *chip, uint16_t alg_id,
+			       bool *out_supported);
+
+enum tpm_ret_value tpm_get_alg_props(struct tpm_chip_data *chip,
+				     uint16_t alg_id, bool *out_supported,
+				     uint32_t *out_props);
+
+enum tpm_ret_value tpm_for_each_alg_props(struct tpm_chip_data *chip,
+					  uint32_t must_set_mask,
+					  uint32_t must_clear_mask,
+					  tpm_alg_props_cb cb,
+					  tpm_alg_props_ctx_t *ctx);
+
+enum tpm_ret_value tpm_for_each_pcr_bank(struct tpm_chip_data *chip,
+					 tpm_pcr_bank_cb cb,
+					 tpm_pcr_bank_ctx_t *ctx);
 
 #endif /* TPM2_H */

@@ -7,67 +7,70 @@
 #ifndef TPM2_PRIVATE_H
 #define TPM2_PRIVATE_H
 
-#include "tpm2_chip.h"
 #include "debug.h"
+#include "tpm2_chip.h"
 
 /*
  * TPM FIFO register space address offsets
  */
-#define TPM_FIFO_REG_ACCESS	((uint32_t)0x000U)
-#define TPM_FIFO_REG_INTR_ENABLE	((uint32_t)0x008U)
-#define TPM_FIFO_REG_INTR_VECTOR	((uint32_t)0x00CU)
-#define TPM_FIFO_REG_INTR_STS	((uint32_t)0x010U)
-#define TPM_FIFO_REG_INTF_CAPS	((uint32_t)0x014U)
-#define TPM_FIFO_REG_STATUS	((uint32_t)0x018U)
-#define TPM_FIFO_REG_BURST_COUNT_LO	((uint32_t)0x019U)
-#define TPM_FIFO_REG_BURST_COUNT_HI	((uint32_t)0x020U)
-#define TPM_FIFO_REG_DATA_FIFO	((uint32_t)0x024U)
-#define TPM_FIFO_REG_VENDID	((uint32_t)0xF00U)
-#define TPM_FIFO_REG_DEVID	((uint32_t)0xF02U)
-#define TPM_FIFO_REG_REVID	((uint32_t)0xF04U)
+#define TPM_FIFO_REG_ACCESS ((uint32_t)0x000U)
+#define TPM_FIFO_REG_INTR_ENABLE ((uint32_t)0x008U)
+#define TPM_FIFO_REG_INTR_VECTOR ((uint32_t)0x00CU)
+#define TPM_FIFO_REG_INTR_STS ((uint32_t)0x010U)
+#define TPM_FIFO_REG_INTF_CAPS ((uint32_t)0x014U)
+#define TPM_FIFO_REG_STATUS ((uint32_t)0x018U)
+#define TPM_FIFO_REG_BURST_COUNT_LO ((uint32_t)0x019U)
+#define TPM_FIFO_REG_BURST_COUNT_HI ((uint32_t)0x020U)
+#define TPM_FIFO_REG_DATA_FIFO ((uint32_t)0x024U)
+#define TPM_FIFO_REG_VENDID ((uint32_t)0xF00U)
+#define TPM_FIFO_REG_DEVID ((uint32_t)0xF02U)
+#define TPM_FIFO_REG_REVID ((uint32_t)0xF04U)
 
 /* Structure tags (16-bit) */
-#define TPM_ST_NO_SESSIONS	((uint16_t)0x8001U)
-#define TPM_ST_SESSIONS	((uint16_t)0x8002U)
+#define TPM_ST_NO_SESSIONS ((uint16_t)0x8001U)
+#define TPM_ST_SESSIONS ((uint16_t)0x8002U)
 
 /* Sizes / handles */
-#define TPM_MIN_AUTH_SIZE	((uint32_t)9U)
-#define TPM_RS_PW	((uint32_t)0x40000009UL)
-#define TPM_ZERO_NONCE_SIZE	((uint32_t)0U)
-#define TPM_ATTRIBUTES_DISABLE	((uint32_t)0U)
-#define TPM_ZERO_HMAC_SIZE	((uint32_t)0U)
-#define TPM_SINGLE_HASH_COUNT	((uint32_t)1U)
-/* 24 PCRs bit-mask with 3 bytes */
-#define TPM_PCR_SELECT_SIZE	((uint8_t)0x3U)
+#define TPM_MIN_AUTH_SIZE ((uint32_t)9U)
+#define TPM_RS_PW ((uint32_t)0x40000009UL)
+#define TPM_ZERO_NONCE_SIZE ((uint32_t)0U)
+#define TPM_ATTRIBUTES_DISABLE ((uint32_t)0U)
+#define TPM_ZERO_HMAC_SIZE ((uint32_t)0U)
+#define TPM_SINGLE_HASH_COUNT ((uint32_t)1U)
 
 /* Commands (16-bit) */
-#define TPM_CMD_STARTUP	((uint16_t)0x0144U)
-#define TPM_CMD_PCR_READ	((uint16_t)0x017EU)
-#define TPM_CMD_PCR_EXTEND	((uint16_t)0x0182U)
+#define TPM_CMD_STARTUP ((uint16_t)0x0144U)
+#define TPM_CMD_PCR_READ ((uint16_t)0x017EU)
+#define TPM_CMD_PCR_EXTEND ((uint16_t)0x0182U)
+#define TPM_CMD_GET_CAPABILITY ((uint16_t)0x017AU)
+
+/* Capabilities (32-bit) */
+#define TPM_CAP_ALGS ((uint32_t)0x00000000U)
+#define TPM_CAP_PCRS ((uint32_t)0x00000005U)
 
 /* Response codes (16-bit) */
-#define TPM_RESPONSE_SUCCESS	((uint16_t)0x0000U)
+#define TPM_RESPONSE_SUCCESS ((uint16_t)0x0000U)
 
 /* ACCESS register bit masks (8-bit) */
-#define TPM_ACCESS_ACTIVE_LOCALITY	((uint8_t)(1U << 5))
-#define TPM_ACCESS_VALID	((uint8_t)(1U << 7))
-#define TPM_ACCESS_RELINQUISH_LOCALITY	((uint8_t)(1U << 5))
-#define TPM_ACCESS_REQUEST_USE	((uint8_t)(1U << 1))
-#define TPM_ACCESS_REQUEST_PENDING	((uint8_t)(1U << 2))
+#define TPM_ACCESS_ACTIVE_LOCALITY ((uint8_t)(1U << 5))
+#define TPM_ACCESS_VALID ((uint8_t)(1U << 7))
+#define TPM_ACCESS_RELINQUISH_LOCALITY ((uint8_t)(1U << 5))
+#define TPM_ACCESS_REQUEST_USE ((uint8_t)(1U << 1))
+#define TPM_ACCESS_REQUEST_PENDING ((uint8_t)(1U << 2))
 
 /* STATUS register bit masks (8-bit) */
-#define TPM_STAT_VALID	((uint8_t)(1U << 7))
-#define TPM_STAT_COMMAND_READY	((uint8_t)(1U << 6))
-#define TPM_STAT_GO	((uint8_t)(1U << 5))
-#define TPM_STAT_AVAIL	((uint8_t)(1U << 4))
-#define TPM_STAT_EXPECT	((uint8_t)(1U << 3))
+#define TPM_STAT_VALID ((uint8_t)(1U << 7))
+#define TPM_STAT_COMMAND_READY ((uint8_t)(1U << 6))
+#define TPM_STAT_GO ((uint8_t)(1U << 5))
+#define TPM_STAT_AVAIL ((uint8_t)(1U << 4))
+#define TPM_STAT_EXPECT ((uint8_t)(1U << 3))
 
-#define TPM_READ_HEADER	((int32_t)-1)
+#define TPM_READ_HEADER ((int32_t) - 1)
 
-#define TPM_HEADER_SIZE	((uint32_t)10U)
-#define MAX_SIZE_CMDBUF	((uint32_t)256U)
-#define MAX_CMD_DATA	((uint32_t)(MAX_SIZE_CMDBUF - TPM_HEADER_SIZE))
-#define MAX_DIGEST_SIZE	((uint32_t)32U)
+#define TPM_HEADER_SIZE ((uint32_t)10U)
+#define MAX_SIZE_CMDBUF ((uint32_t)256U)
+#define MAX_CMD_DATA ((uint32_t)(MAX_SIZE_CMDBUF - TPM_HEADER_SIZE))
+#define MAX_DIGEST_SIZE ((uint32_t)32U)
 
 /*
  * Provide a backward-compatible implementation of static_assert.
