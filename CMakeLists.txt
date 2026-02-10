@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2025, Arm Limited and Contributors. All rights reserved.
+# Copyright (c) 2025-2026, Arm Limited and Contributors. All rights reserved.
 #
 # SPDX-License-Identifier: MIT OR GPL-2.0-or-later
 #
@@ -109,6 +109,11 @@ install(FILES
     ${PROJECT_SOURCE_DIR}/include/tpm2_chip.h
     ${PROJECT_SOURCE_DIR}/include/transport/spi.h
     DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/tpm2
+)
+
+install(FILES
+    ${PROJECT_SOURCE_DIR}/include/platform/tpm_platform.h
+    DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/tpm2/platform
 )
 
 # Export targets file
