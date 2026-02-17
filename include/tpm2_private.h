@@ -33,6 +33,7 @@
 /* Sizes / handles */
 #define TPM_MIN_AUTH_SIZE ((uint32_t)9U)
 #define TPM_RS_PW ((uint32_t)0x40000009UL)
+#define TPM_RH_PLATFORM ((uint32_t)0x4000000CUL)
 #define TPM_ZERO_NONCE_SIZE ((uint32_t)0U)
 #define TPM_ATTRIBUTES_DISABLE ((uint32_t)0U)
 #define TPM_ZERO_HMAC_SIZE ((uint32_t)0U)
@@ -43,6 +44,7 @@
 #define TPM_CMD_PCR_READ ((uint16_t)0x017EU)
 #define TPM_CMD_PCR_EXTEND ((uint16_t)0x0182U)
 #define TPM_CMD_GET_CAPABILITY ((uint16_t)0x017AU)
+#define TPM_CMD_PCR_ALLOCATE ((uint16_t)0x012BU)
 
 /* Capabilities (32-bit) */
 #define TPM_CAP_ALGS ((uint32_t)0x00000000U)

@@ -783,6 +783,140 @@ int tpm_pcr_read_single(struct tpm_chip_data *chip_data, uint32_t index,
 	return TPM_SUCCESS;
 }
 
+enum tpm_ret_value tpm_pcr_allocate_auth_password(
+	struct tpm_chip_data *chip, const uint8_t *password,
+	uint16_t password_len, const tpm_pcr_allocate_bank_t *banks,
+	bool *out_success, uint32_t *out_max_pcr, uint32_t *out_size_needed,
+	uint32_t *out_size_available)
+{
+	tpm_cmd cmd;
+	tpm_cmd resp;
+	tpm_cmd_builder_t builder;
+	tpm_buf_iter_t iter = { 0 };
+	uint32_t auth_size;
+	uint32_t count = 0U;
+	uint32_t resp_size;
+	uint16_t resp_tag;
+	uint32_t tpm_rc;
+	uint32_t param_size;
+	uint8_t alloc_success;
+	int ret;
+
+	if ((chip == NULL) || (banks == NULL) || (out_success == NULL) ||
+	    (out_max_pcr == NULL) || (out_size_needed == NULL) ||
+	    (out_size_available == NULL)) {
+		ERROR("%s: NULL parameter\n", __func__);
+		return TPM_INVALID_PARAM;
+	}
+	if ((password_len > 0U) && (password == NULL)) {
+		ERROR("%s: NULL password with non-zero length\n", __func__);
+		return TPM_INVALID_PARAM;
+	}
+
+	for (uint32_t i = 0U; i < TPM_MAX_PCR_SELECTIONS; i++) {
+		if (banks[i].hash_alg == TPM_ALG_NULL) {
+			break;
+		}
+		count++;
+	}
+	if (count == 0U) {
+		ERROR("%s: empty bank list\n", __func__);
+		return TPM_INVALID_PARAM;
+	}
+	if (count >= TPM_MAX_PCR_SELECTIONS) {
+		ERROR("%s: bank list missing NULL terminator\n", __func__);
+		return TPM_INVALID_PARAM;
+	}
+
+	memset(&resp, 0, sizeof(resp));
+
+	tpm_cmd_init(&builder, &cmd, TPM_ST_SESSIONS, TPM_CMD_PCR_ALLOCATE);
+
+	/* authHandle (TPM_RH_PLATFORM) */
+	tpm_update_buffer(&builder, TPM_RH_PLATFORM, sizeof(uint32_t));
+
+	/* authorizationSize */
+	auth_size = TPM_MIN_AUTH_SIZE + (uint32_t)password_len;
+	tpm_update_buffer(&builder, auth_size, sizeof(uint32_t));
+
+	/* sessionHandle */
+	tpm_update_buffer(&builder, TPM_RS_PW, sizeof(uint32_t));
+
+	/* nonce size */
+	tpm_update_buffer(&builder, TPM_ZERO_NONCE_SIZE, sizeof(uint16_t));
+
+	/* session attributes */
+	tpm_update_buffer(&builder, TPM_ATTRIBUTES_DISABLE, sizeof(uint8_t));
+
+	/* auth size */
+	tpm_update_buffer(&builder, password_len, sizeof(uint16_t));
+
+	/* auth value */
+	for (uint16_t i = 0U; i < password_len; i++) {
+		tpm_update_buffer(&builder, password[i], sizeof(uint8_t));
+	}
+
+	/* TPML_PCR_SELECTION count */
+	tpm_update_buffer(&builder, count, sizeof(uint32_t));
+
+	for (uint32_t i = 0U; i < count; i++) {
+		tpm_update_buffer(&builder, banks[i].hash_alg,
+				  sizeof(uint16_t));
+		tpm_update_buffer(&builder, TPM_PCR_SELECT_SIZE,
+				  sizeof(uint8_t));
+		for (uint32_t j = 0U; j < TPM_PCR_SELECT_SIZE; j++) {
+			tpm_update_buffer(&builder, banks[i].pcr_select[j],
+					  sizeof(uint8_t));
+		}
+	}
+
+	ret = tpm_builder_finalize(&builder);
+	if (ret < 0) {
+		return ret;
+	}
+
+	ret = tpm_xfer(chip, &cmd, &resp);
+	if (ret < 0) {
+		return ret;
+	}
+
+	resp_tag = be16toh(resp.header.tag);
+	if (resp_tag != TPM_ST_SESSIONS) {
+		return TPM_ERR_RESPONSE;
+	}
+
+	tpm_rc = be32toh(resp.header.cmd_code);
+	if (tpm_rc != TPM_RESPONSE_SUCCESS) {
+		return TPM_ERR_RESPONSE;
+	}
+
+	resp_size = be32toh(resp.header.cmd_size);
+	if ((resp_size < (TPM_HEADER_SIZE + 17U)) ||
+	    (resp_size > sizeof(tpm_cmd))) {
+		return TPM_ERR_RESPONSE;
+	}
+
+	iter.ptr = resp.data;
+	iter.remain = (size_t)(resp_size - TPM_HEADER_SIZE);
+
+	/* parameterSize (skip) */
+	iter_read_u32_be(&iter, &param_size);
+	(void)param_size;
+
+	iter_read_u8(&iter, &alloc_success);
+	iter_read_u32_be(&iter, out_max_pcr);
+	iter_read_u32_be(&iter, out_size_needed);
+	iter_read_u32_be(&iter, out_size_available);
+
+	if (iter.error_state != TPM_SUCCESS) {
+		return iter.error_state;
+	}
+
+	*out_success = (alloc_success != 0U);
+
+	return TPM_SUCCESS;
+}
+
 enum tpm_ret_value tpm_getcap_query_algs(struct tpm_chip_data *chip,
 					 tpm_alg_query_t *query)
 {

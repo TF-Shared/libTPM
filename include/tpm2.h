@@ -51,6 +51,11 @@ typedef struct {
 } tpm_pcr_bank_query_t;
 
 typedef struct {
+	uint16_t hash_alg; /* TPM_ALG_*; TPM_ALG_NULL terminates list */
+	uint8_t pcr_select[TPM_PCR_SELECT_SIZE];
+} tpm_pcr_allocate_bank_t;
+
+typedef struct {
 	uint32_t flags;
 	uint32_t count;
 } tpm_alg_props_ctx_t;
@@ -83,6 +88,12 @@ int tpm_pcr_extend(struct tpm_chip_data *chip_data, uint32_t index,
 int tpm_pcr_read_single(struct tpm_chip_data *chip_data, uint32_t index,
 			uint16_t algorithm, uint8_t *pcr_digest_read,
 			size_t pcr_digest_read_len);
+
+enum tpm_ret_value tpm_pcr_allocate_auth_password(
+	struct tpm_chip_data *chip, const uint8_t *password,
+	uint16_t password_len, const tpm_pcr_allocate_bank_t *banks,
+	bool *out_success, uint32_t *out_max_pcr, uint32_t *out_size_needed,
+	uint32_t *out_size_available);
 
 enum tpm_ret_value tpm_getcap_query_algs(struct tpm_chip_data *chip,
 					 tpm_alg_query_t *query);
