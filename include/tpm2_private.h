@@ -70,7 +70,7 @@
 #define TPM_HEADER_SIZE ((uint32_t)10U)
 #define MAX_SIZE_CMDBUF ((uint32_t)256U)
 #define MAX_CMD_DATA ((uint32_t)(MAX_SIZE_CMDBUF - TPM_HEADER_SIZE))
-#define MAX_DIGEST_SIZE ((uint32_t)32U)
+#define MAX_DIGEST_SIZE ((uint32_t)48U)
 
 /*
  * Provide a backward-compatible implementation of static_assert.

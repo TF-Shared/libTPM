@@ -18,6 +18,7 @@
 #define TPM_SU_STATE 0x0001U
 
 #define TPM_ALG_SHA256 ((uint16_t)0x000BU)
+#define TPM_ALG_SHA384 ((uint16_t)0x000CU)
 #define TPM_ALG_NULL ((uint16_t)0x0010U)
 /* 24 PCRs bit-mask with 3 bytes */
 #define TPM_PCR_SELECT_SIZE ((uint8_t)0x3U)
