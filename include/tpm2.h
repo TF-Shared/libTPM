@@ -17,10 +17,22 @@
 #define TPM_SU_CLEAR 0x0000U
 #define TPM_SU_STATE 0x0001U
 
+#ifndef TPM_ALG_SHA1
 #define TPM_ALG_SHA1 ((uint16_t)0x0004U)
+#endif /* TPM_ALG_SHA1 */
+
+#ifndef TPM_ALG_SHA256
 #define TPM_ALG_SHA256 ((uint16_t)0x000BU)
+#endif /* TPM_ALG_SHA256 */
+
+#ifndef TPM_ALG_SHA384
 #define TPM_ALG_SHA384 ((uint16_t)0x000CU)
+#endif /* TPM_ALG_SHA384 */
+
+#ifndef TPM_ALG_NULL
 #define TPM_ALG_NULL ((uint16_t)0x0010U)
+#endif /* TPM_ALG_NULL */
+
 /* 24 PCRs bit-mask with 3 bytes */
 #define TPM_PCR_SELECT_SIZE ((uint8_t)0x3U)
 #define TPM_PCR_BANK_FULL ((1ULL << ((TPM_PCR_SELECT_SIZE) * 8)) - 1)
