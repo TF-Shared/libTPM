@@ -52,6 +52,7 @@
 
 /* Response codes (16-bit) */
 #define TPM_RESPONSE_SUCCESS ((uint16_t)0x0000U)
+#define TPM_RC_INITIALIZE ((uint16_t)0x0100U)
 
 /* ACCESS register bit masks (8-bit) */
 #define TPM_ACCESS_ACTIVE_LOCALITY ((uint8_t)(1U << 5))

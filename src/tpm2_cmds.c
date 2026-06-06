@@ -622,7 +622,11 @@ int tpm_startup(struct tpm_chip_data *chip_data, uint16_t mode)
 	}
 
 	tpm_rc = be32toh(startup_response.header.cmd_code);
-	if (tpm_rc != TPM_RESPONSE_SUCCESS) {
+	if (tpm_rc == TPM_RC_INITIALIZE) {
+		WARN("%s: TPM_RC_INITIALIZE received; TPM is already initialised\n",
+		     __func__);
+		return TPM_ERR_ALREADY_INIT;
+	} else if (tpm_rc != TPM_RESPONSE_SUCCESS) {
 		ERROR("%s: response code contains error = %X\n", __func__,
 		      tpm_rc);
 		return TPM_ERR_RESPONSE;
@@ -799,7 +803,7 @@ enum tpm_ret_value tpm_pcr_allocate_auth_password(
 	uint16_t resp_tag;
 	uint32_t tpm_rc;
 	uint32_t param_size;
-	uint8_t alloc_success;
+	uint8_t alloc_success = 0U;
 	int ret;
 
 	if ((chip == NULL) || (banks == NULL) || (out_success == NULL) ||

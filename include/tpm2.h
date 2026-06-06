@@ -37,6 +37,8 @@ enum tpm_ret_value {
 	TPM_ERR_TIMEOUT = -3,
 	TPM_ERR_TRANSFER = -4,
 	TPM_ERR_ITERATION_LIMIT = -5,
+	/* Non-fatal: the TPM was already initialized. */
+	TPM_ERR_ALREADY_INIT = -6,
 };
 
 typedef struct {
